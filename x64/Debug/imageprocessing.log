@@ -1,2 +1,4 @@
 ﻿  main.cpp
+C:\Users\emrhssla\source\repos\imageprocessing\imageprocessing\main.cpp(140,19): warning C4244:  '=': 'double'에서 'uchar'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\emrhssla\source\repos\imageprocessing\imageprocessing\main.cpp(148,21): warning C4101:  'cvImg2' :참조되지 않은 지역 변수입니다.
   imageprocessing.vcxproj -> C:\Users\emrhssla\source\repos\imageprocessing\x64\Debug\imageprocessing.exe
