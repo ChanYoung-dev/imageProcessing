@@ -141,72 +141,108 @@ void PowImg(uchar** img, uchar** Result, int Row, int Col, double gamma)
 		}
 }
 
-
-int main(int argc, char* argv[]) {
+void BitSlicing(uchar** img, uchar** Result, int Row, int Col, int position)
+{
 	int i, j;
-	double avg, gamma = 1;
-	IplImage* cvImg, * cvImg2;
-	CvSize imgSize, imgSize2;
-	uchar** img;
-	uchar** omg;
+	uchar mask = 0x01;
+	mask <<= position;
 
-	if (argc != 5) {
-		printf("Exe imgData x_size y_size \n");
+	for (i = 0; i < Row; i++)
+		for (j = 0; j < Col; j++)
+		{
+			if ((mask & img[j][i]) == pow(2, position))
+			{
+				Result[j][i] = pow(2, position);
+			}
+			else
+			{
+				Result[j][i] = 0;
+			}
+
+		}
+}
+void BitImage(uchar** img, uchar** Result, int Row, int Col, int sum)
+{
+	int i, j, k;
+	uchar mask = 0x80;
+
+	for (k = 1; k < sum; k++)
+	{
+		mask = mask + (0x80 >> k);
+	}
+
+	for (i = 0; i < Row; i++)
+		for (j = 0; j < Col; j++)
+		{
+			Result[i][j] = img[i][j] & mask;
+		}
+}
+double myaver(uchar** img, int Row, int Col) {
+	int i, j, k;
+	double pp[256] = { 0 };
+	double ssum = 0;
+
+	for (k = 0; k < 256; k++) {
+		for (i = 0; i < Row; i++) {
+			for (j = 0; j < Col; j++) {
+				if (img[i][j] == k) {
+					pp[k] += 1;
+				}
+			}
+		}
+		ssum += ((pp[k] * k) / (Row * Col));
+
+	}
+	return ssum;
+
+}
+
+
+int main(int argc, char* argv[])
+{
+
+	double avg = 0;
+	double gamma = 0.5;
+	IplImage* cvImg;
+	CvSize imgSize;
+	uchar** img;
+	uchar** rimg;
+
+	if (argc != 5)
+	{
+		printf("Exe imgData x_size y_size resultimg \n");
 		exit(0);
 	}
-
 	imgSize.width = atoi(argv[2]);
 	imgSize.height = atoi(argv[3]);
-
-	cvImg = cvCreateImage(imgSize, 8, 1);
-	//img ,원본 / omg , 감마값 적용이미지
 	img = uc_alloc(imgSize.width, imgSize.height);
-	omg = uc_alloc(imgSize.width, imgSize.height);
-	//img 이미지 읽기
+	rimg = uc_alloc(imgSize.width, imgSize.height);  //결과 이미지를 저장할 곳을 할당해줌
 	read_ucmatrix(imgSize.width, imgSize.height, img, argv[1]);
+	BitImage(img, rimg, imgSize.width, imgSize.height, 3);
+	//addImage(img, rimg, imgSize.width, imgSize.height, 3);
+	write_ucmatrix(imgSize.width, imgSize.height, rimg, argv[4]);  //결과값 저장
+	average(rimg, imgSize.width, imgSize.height);
 
-	//평균값설정
-	avg = average(img, imgSize.width, imgSize.height);
+	/*cvImg = cvCreateImage(imgSize, 8, 1);
+	for (i = 0; i < imgSize.height; i++)
+	   for (j = 0; j < imgSize.width; j++)
+	   {
 
-	//감마2.45 설정
-	PowImg(img, omg, imgSize.width, imgSize.height, 10);
+		  ((uchar*)(cvImg->imageData + cvImg->widthStep * i))[j] = img[i][j];
 
-	//평균값 128로 설정
-	if (avg < 128) {
-		while (avg < 128) {
-			gamma = gamma + 0.001;
-			PowImg(img, omg, imgSize.width, imgSize.height, gamma);
-			avg = average(omg, imgSize.width, imgSize.height);
-		}
-	}
-	else if (avg > 128) {
-		while (avg > 128) {
-			gamma = gamma - 0.001;
-			PowImg(img, omg, imgSize.width, imgSize.height, gamma);
-			avg = average(omg, imgSize.width, imgSize.height);
-		}
-	}
-	else
-		//구해진 평균값에 따른 감마값을 적용시켜 이미지 추출 
-		PowImg(img, omg, imgSize.width, imgSize.height, gamma);
+	   }
+	   cvNamedWindow(argv[1], 1);
+	   cvShowImage(argv[1], cvImg);
 
 
-	//띄울 사진 설정
-	for (i = 0; i < imgSize.width; i++)
-		for (j = 0; j < imgSize.height; j++) {
-			//img[j][i]일경우 원본사진이 뜨고, omg[j][i]일경우 감마작업을 한 사진이 뜬다.
-			((uchar*)(cvImg->imageData + cvImg->widthStep * j))[i] = img[j][i];
-		}
-	//감마작업한 사진을 저장한다.
-	write_ucmatrix(imgSize.width, imgSize.height, omg, argv[4]);
-	//윈도우창 이름설정
-	cvNamedWindow(argv[1], 0);
-	//보여줄 이미지 설정
-	cvShowImage(argv[1], cvImg);
 	cvWaitKey(0);
 
+	cvDestroyWindow("image");
 	cvReleaseImage(&cvImg);
 
+	getchar();
+	getchar();*/
 
 	return 0;
+
 }
