@@ -3,11 +3,12 @@
 #include<opencv\cxcore.h>
 
 #include <stdio.h>
+#include <time.h>
 
 #define unsigned char uchar
 
 
-uchar** uc_alloc(int size_x, int size_y) // ��� �޸� �Ҵ� x,y
+uchar** uc_alloc(int size_x, int size_y)
 {
 
 	uchar** m;
@@ -27,6 +28,29 @@ uchar** uc_alloc(int size_x, int size_y) // ��� �޸� �Ҵ� x,y
 		}
 	return m;
 }
+
+int** i_alloc(int size_x, int size_y)
+{
+
+	int** m;
+	int i;
+
+	if ((m = (int**)calloc(size_y, sizeof(int*))) == NULL)
+	{
+		printf("i_alloc error 1\7\n");
+		exit(0);
+	}
+
+	for (i = 0; i < size_y; i++)
+		if ((m[i] = (int*)calloc(size_x, sizeof(int))) == NULL) {
+			printf("i_alloc error 2\7\n");
+			exit(0);
+
+		}
+	return m;
+}
+
+
 
 void read_ucmatrix(int size_x, int size_y, uchar** ucmatrix, char* filename)
 {
@@ -67,173 +91,105 @@ void write_ucmatrix(int size_x, int size_y, uchar** ucmatrix, char* filename)
 		}
 	fclose(f);
 }
-//평균값
-double average(uchar** img, int size_x, int size_y)
-{
-	double sum = 0, avg;
-	int i, j;
 
-	for (i = 0; i < size_x; i++)
-	{
-		for (j = 0; j < size_y; j++)
-		{
-			sum += img[i][j];
-		}
+double uniform()
+{
+
+	return ((double)(rand() & RAND_MAX) / RAND_MAX - 0.5);
+}
+
+double gaussian()
+{
+	static int ready = 0;
+	static double gstore;
+	double v1, v2, r, fac, gaus;
+	double uniform();
+
+	if (ready == 0) {
+		do {
+			v1 = 2. * uniform();
+			v2 = 2. * uniform();
+			r = v1 * v1 + v2 * v2;
+		} while (r > 1.0);
+
+		fac = sqrt(-2. * log(r) / r);
+		gstore = v1 * fac;
+		gaus = v2 * fac;
+		ready = 1;
 	}
-	avg = sum / ((double)size_x * size_y);
-	printf("Average of Image %lf \n", avg);
-
-	return avg;
-}
-//분산값 구하기
-double bunsan(uchar** img, int size_x, int size_y)
-{
-	double avg = average(img, size_x, size_y);
-	double total = 0, valance = 0;
-	int i, j;
-	for (i = 0; i < size_x; i++)
-	{
-		for (j = 0; j < size_y; j++)
-		{
-			valance += (img[i][j] - avg) * (img[i][j] - avg);
-		}
+	else {
+		ready = 0;
+		gaus = gstore;
 	}
-	total = valance / (size_x * size_y);
-	printf("�л��� %lf \n", total);
-	printf("ǥ�������� %lf \n", sqrt(total));
-
-	return avg;
-
+	return(gaus);
 }
-
-void makeBinary(uchar** img, uchar** out, int size_x, int size_y, double avg)
-{
-	int i, j;
-
-	for (i = 0; i < size_x; i++)
-	{
-		for (j = 0; j < size_y; j++)
-		{
-			if (img[i][j] > avg)
-				out[i][j] = 255;      // chang value for book with avg-30
-			else
-				out[i][j] = 0;
-		}
-	}
-}
-
-void PowImg(uchar** img, uchar** Result, int Row, int Col, double gamma)
-{
-	int i, j;
-	double tmp;
-
-	for (i = 0; i < Row; i++)//��
-		for (j = 0; j < Col; j++)//��
-		{
-			tmp = pow(img[j][i] / 255., 1 / gamma);
-
-			if (tmp * 255 > 255)tmp = 1;
-			else if (tmp * 255 < 0) tmp = 0;
-
-			tmp = tmp * 255;
-
-			Result[j][i] = tmp;
-		}
-}
-
-void BitSlicing(uchar** img, uchar** Result, int Row, int Col, int position)
-{
-	int i, j;
-	uchar mask = 0x01;
-	mask <<= position;
-
-	for (i = 0; i < Row; i++)
-		for (j = 0; j < Col; j++)
-		{
-			if ((mask & img[j][i]) == pow(2, position))
-			{
-				Result[j][i] = pow(2, position);
-			}
-			else
-			{
-				Result[j][i] = 0;
-			}
-
-		}
-}
-void BitImage(uchar** img, uchar** Result, int Row, int Col, int sum)
+// many번까지 noise추가
+void noiseGaus(uchar** img, uchar** Result, int Row, int Col, int many)
 {
 	int i, j, k;
-	uchar mask = 0x80;
-
-	for (k = 1; k < sum; k++)
+	double gaus;
+	int** tmp;
+	tmp = i_alloc(Row, Col);
+	for (k = 0; k < many; k++)
 	{
-		mask = mask + (0x80 >> k);
-	}
-
-	for (i = 0; i < Row; i++)
-		for (j = 0; j < Col; j++)
-		{
-			Result[i][j] = img[i][j] & mask;
-		}
-}
-double myaver(uchar** img, int Row, int Col) {
-	int i, j, k;
-	double pp[256] = { 0 };
-	double ssum = 0;
-
-	for (k = 0; k < 256; k++) {
-		for (i = 0; i < Row; i++) {
-			for (j = 0; j < Col; j++) {
-				if (img[i][j] == k) {
-					pp[k] += 1;
-				}
+		for (i = 0; i < Row; i++)
+			for (j = 0; j < Col; j++)
+			{
+				gaus = gaussian();
+				tmp[i][j] += img[i][j] + (gaus * 30);
 			}
-		}
-		ssum += ((pp[k] * k) / (Row * Col));
-
 	}
-	return ssum;
-
+	for (int j = 0; j < Row; j++)
+		for (int t = 0; t < Col; t++)
+		{
+			Result[j][t] = (tmp[j][t] / many);
+		}
 }
 
 
 int main(int argc, char* argv[])
 {
 
-	double avg = 0;
-	double gamma = 0.5;
+	int i, j, count;
 	IplImage* cvImg;
 	CvSize imgSize;
-	uchar** img;
-	uchar** rimg;
+	uchar** img, ** result_img, ** result_img2;
+	int** tmp;
+
+	srand(time(NULL));
 
 	if (argc != 5)
 	{
-		printf("Exe imgData x_size y_size resultimg \n");
+		printf("Exe imgData x_size y_size \n");
 		exit(0);
 	}
+
 	imgSize.width = atoi(argv[2]);
 	imgSize.height = atoi(argv[3]);
+	count = atoi(argv[4]);
+
 	img = uc_alloc(imgSize.width, imgSize.height);
-	rimg = uc_alloc(imgSize.width, imgSize.height);  //결과 이미지를 저장할 곳을 할당해줌
+	result_img = uc_alloc(imgSize.width, imgSize.height);
+
 	read_ucmatrix(imgSize.width, imgSize.height, img, argv[1]);
-	BitImage(img, rimg, imgSize.width, imgSize.height, 3);
-	//addImage(img, rimg, imgSize.width, imgSize.height, 3);
-	write_ucmatrix(imgSize.width, imgSize.height, rimg, argv[4]);  //결과값 저장
-	average(rimg, imgSize.width, imgSize.height);
 
-	/*cvImg = cvCreateImage(imgSize, 8, 1);
+	//gausAdd(img, result_img, imgSize.width, imgSize.height);
+	noiseGaus(img, result_img, imgSize.width, imgSize.height, count);
+
+	cvImg = cvCreateImage(imgSize, 8, 1);
+
+
 	for (i = 0; i < imgSize.height; i++)
-	   for (j = 0; j < imgSize.width; j++)
-	   {
+		for (j = 0; j < imgSize.width; j++)
+		{
 
-		  ((uchar*)(cvImg->imageData + cvImg->widthStep * i))[j] = img[i][j];
+			((uchar*)(cvImg->imageData + cvImg->widthStep * i))[j] = (result_img[i][j]);
 
-	   }
-	   cvNamedWindow(argv[1], 1);
-	   cvShowImage(argv[1], cvImg);
+		}
 
+
+	cvNamedWindow(argv[1], 1);
+	cvShowImage(argv[1], cvImg);
 
 	cvWaitKey(0);
 
@@ -241,7 +197,6 @@ int main(int argc, char* argv[])
 	cvReleaseImage(&cvImg);
 
 	getchar();
-	getchar();*/
 
 	return 0;
 
