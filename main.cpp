@@ -142,7 +142,7 @@ int main(int argc, char* argv[])
 
 	cvImg = cvCreateImage(imgSize, 8, 1);
 
-	mosaicCircle(img, result_img, imgSize.width, imgSize.height, sex*2, sexminsoo*2, circle_size , mosaic_value);
+	mosaicCircle(img, result_img, imgSize.width, imgSize.height, sizewidth*2, sizeheight*2, circle_size , mosaic_value);
 
 	for (i = 0; i < imgSize.height; i++)
 		for (j = 0; j < imgSize.width; j++)
