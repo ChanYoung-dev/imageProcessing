@@ -91,7 +91,7 @@ void mosaic(uchar** img, uchar** out, int Row, int Col, int Block) {
 	}
 }
 
-void mosaicCircle(uchar** img, uchar** Result, int Row, int Col, double diameter, int Block)
+void mosaicCircle(uchar** img, uchar** Result, int Row, int Col, int circlewidth, int circleheight, double diameter, int Block)
 {
    int i, j, x, y, tmp2, c;
    double tmp, xSqure, ySqure;
@@ -103,8 +103,8 @@ void mosaicCircle(uchar** img, uchar** Result, int Row, int Col, double diameter
    for (i = 0; i < Row; i++)
       for (j = 0; j < Col; j++)
       {
-         ySqure = (abs(Row / 2 - i)) * (abs(Row / 2 - i));
-         xSqure = (abs(Col / 2 - j)) * (abs(Col / 2 - j));
+         ySqure = (abs(circlewidth / 2 - i)) * (abs(circlewidth / 2 - i));
+         xSqure = (abs(circleheight / 2 - j)) * (abs(circleheight / 2 - j));
 
          tmp = sqrt(ySqure + xSqure);
 
@@ -116,7 +116,7 @@ void mosaicCircle(uchar** img, uchar** Result, int Row, int Col, double diameter
 int main(int argc, char* argv[])
 {
 
-	int i, j, circle_size, mosaic_value;
+	int i, j, circle_size, mosaic_value, sizewidth, sizeheight;
 	IplImage* cvImg;
 	CvSize imgSize;
 	uchar** img, ** result_img, ** result2_img, ** circle_img, ** circle2_img;
@@ -132,13 +132,17 @@ int main(int argc, char* argv[])
 	circle_size = atoi(argv[4]);
 	mosaic_value = atoi(argv[5]);
 
+	printf("넓이 입력 바랍니다 : ");
+	scanf_s("%d",&sizewidth);
+	printf("높이 입력 바랍니다 : ");
+	scanf_s("%d", &sizeheight);
 	img = uc_alloc(imgSize.width, imgSize.height);
 	result_img = uc_alloc(imgSize.width, imgSize.height);
 	read_ucmatrix(imgSize.width, imgSize.height, img, argv[1]);
 
 	cvImg = cvCreateImage(imgSize, 8, 1);
 
-	mosaicCircle(img, result_img, imgSize.width, imgSize.height, circle_size , mosaic_value);
+	mosaicCircle(img, result_img, imgSize.width, imgSize.height, sex*2, sexminsoo*2, circle_size , mosaic_value);
 
 	for (i = 0; i < imgSize.height; i++)
 		for (j = 0; j < imgSize.width; j++)
