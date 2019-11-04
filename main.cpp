@@ -1,226 +1,185 @@
-#include <opencv\cv.h>
+#include <iostream>
+
+#include<opencv\cv.h>
 #include<opencv\highgui.h>
 #include<opencv\cxcore.h>
 
-#include <stdio.h>
+#include<stdio.h>
+#include<Windows.h>
+#include<stdlib.h>
+#include<time.h>
 
 #define unsigned char uchar
 
-double** gaussMask, ** aveMask;
-int block_size = 3;
 
+uchar** uc_alloc(int size_x, int size_y)
+{
 
-uchar** uc_alloc(int size_x, int size_y){
+	uchar** m;
+	int i;
 
-   uchar** m;
-   int i;
+	if ((m = (uchar * *)calloc(size_y, sizeof(uchar*))) == NULL)
+	{
+		printf("uc_alloc error 1\7\n");
+		exit(0);
+	}
 
-   if ((m = (uchar * *)calloc(size_y, sizeof(uchar*))) == NULL)
-   {
-      printf("uc_alloc error 1\7\n");
-      exit(0);
-   }
+	for (i = 0; i < size_y; i++)
+		if ((m[i] = (uchar*)calloc(size_x, sizeof(uchar))) == NULL) {
+			printf("uc_alloc error 2\7\n");
+			exit(0);
 
-   for (i = 0; i < size_y; i++)
-      if ((m[i] = (uchar*)calloc(size_x, sizeof(uchar))) == NULL) {
-         printf("uc_alloc error 2\7\n");
-         exit(0);
-
-      }
-   return m;
+		}
+	return m;
 }
+
 
 double** d_alloc(int size_x, int size_y)
 {
 
-   double** m;
-   int i;
+	double** m;
+	int i;
 
-   if ((m = (double**)calloc(size_y, sizeof(double*))) == NULL)
-   {
-      printf("d_alloc error 1\7\n");
-      exit(0);
-   }
+	if ((m = (double**)calloc(size_y, sizeof(double*))) == NULL)
+	{
+		printf("uc_alloc error 1\7\n");
+		exit(0);
+	}
 
-   for (i = 0; i < size_y; i++)
-      if ((m[i] = (double*)calloc(size_x, sizeof(double))) == NULL) {
-         printf("i_alloc error 2\7\n");
-         exit(0);
+	for (i = 0; i < size_y; i++)
+		if ((m[i] = (double*)calloc(size_x, sizeof(double))) == NULL) {
+			printf("uc_alloc error 2\7\n");
+			exit(0);
 
-      }
-   return m;
+		}
+	return m;
 }
 
 
 void read_ucmatrix(int size_x, int size_y, uchar** ucmatrix, char* filename)
 {
-   int i;
-   FILE* f;
-   if ((fopen_s(&f, filename, "rb")) != NULL)
-   {
-      printf("%s File open Error! \n", filename);
-      exit(0);
+	int i;
+	FILE* f;
+	if ((fopen_s(&f, filename, "rb")) != NULL)
+	{
+		printf("%s File open Error! \n", filename);
+		exit(0);
 
-   }
-   for (i = 0; i < size_y; i++)
-      if (fread(ucmatrix[i], sizeof(uchar), size_x, f) != size_x)
-      {
-         printf("Data Read Error! \n");
-         exit(0);
+	}
+	for (i = 0; i < size_y; i++)
+		if (fread(ucmatrix[i], sizeof(uchar), size_x, f) != size_x)
+		{
+			printf("Data Read Error! \n");
+			exit(0);
 
-      }
-   fclose(f);
+		}
+	fclose(f);
 }
-
 void write_ucmatrix(int size_x, int size_y, uchar** ucmatrix, char* filename)
 {
-   int i;
-   FILE* f;
+	int i;
+	FILE* f;
 
-   if ((fopen_s(&f, filename, "wb")) != NULL)
-   {
-      printf("%s File open Error! \n", filename);
-      exit(0);
-   }
+	if ((fopen_s(&f, filename, "wb")) != NULL)
+	{
+		printf("%s File open Error! \n", filename);
+		exit(0);
+	}
 
-   for (i = 0; i < size_y; i++)
-      if (fwrite(ucmatrix[i], sizeof(uchar), size_x, f) != size_x)
-      {
-         printf("Data Write Error! \n");
-         exit(0);
-      }
-   fclose(f);
+	for (i = 0; i < size_y; i++)
+		if (fwrite(ucmatrix[i], sizeof(uchar), size_x, f) != size_x)
+		{
+			printf("Data Write Error! \n");
+			exit(0);
+		}
+	fclose(f);
 }
 
-void convolution(double** h, int F_length, int size_x, int size_y, uchar** image1, uchar** image2) {
-   int i, j, x, y;
-   int margin, indexX, indexY;
-   double sum, coeff;
 
-   margin = (int)(F_length / 2);
+void Bubble_sort(uchar* Sort, uchar* median_value, int Mode, int filterSize) {
+	int i, x;
+	uchar temp, swap;
 
-   for (i = 0; i < size_y; i++) {
-      for (j = 0; j < size_x; j++) {
-         sum = 0;
-         for (y = 0; y < F_length; y++) {
-            indexY = i - margin + y;
-            if (indexY < 0) indexY = -indexY;
-            else if (indexY >= size_x) indexY = (2 * size_x - indexY - 1);
-
-            for (x = 0; x < F_length; x++) {
-               indexX = j - margin + x;
-               if (indexX < 0) indexX = -indexX;
-               else if (indexX >= size_x) indexX = (2 * size_x - indexX - 1);
-
-               sum += h[y][x] * (double)image1[indexY][indexX];
-            }
-         }
-         //sum += 128;
-         if (sum < 0) sum = 0.;
-         else if (sum > 255) sum = 255.;
-
-         image2[i][j] = (uchar)sum;
-      }
-   }
+	for (x = 0; x < filterSize * filterSize; x++) {
+		temp = Sort[x];
+		for (i = x; i < filterSize * filterSize - 1; i++) {
+			if (temp >= Sort[i + 1]) {
+				swap = temp;
+				temp = Sort[i + 1];
+				Sort[i + 1] = swap;
+			}
+		}
+		Sort[x] = temp;
+	}
+	if (Mode == -1)         //min
+		* median_value = (uchar)Sort[0];
+	else if (Mode == 0)      //aver
+		* median_value = (uchar)Sort[filterSize * filterSize / 2];
+	else if (Mode == 1)      //max
+		* median_value = (uchar)Sort[filterSize * filterSize - 1];
 }
-/*
-void median(uchar** inImg, uchar** outImg, int row, int col, int mode, int filesize) {
-   int i, j, x, y, z, count = 0;
-   uchar median_value, Sort[filtersize * filtersize];
-   for(i)
-}*/
+
+void median(uchar** inImg, uchar** outImg, int ROW, int COL, int Mode, int filterSize) {
+	int i, j, x, y, z, count = 0;
+	uchar median_value, Sort[3 * 3];
+	for (i = 0; i < ROW; i++)
+		for (j = 0; j < COL; j++)
+			outImg[i][j] = inImg[i][j];
+	for (i = 0; i < ROW - filterSize; i++)
+		for (j = 0; j < COL - filterSize; j++) {
+			for (x = 0; x < filterSize; x++)
+				for (y = 0; y < filterSize; y++)
+					Sort[filterSize * x + y] = inImg[i + x][j + y];
+
+			Bubble_sort(Sort, &median_value, Mode, filterSize);
+			outImg[i + 1][j + 1] = median_value;
 
 
+		}
+}
 
 int main(int argc, char* argv[])
 {
 
-   int i, j,flag;
-   IplImage* cvImg;
-   uchar** inImg, ** outImg;
-   CvSize imgSize;
-   uchar** img;
-   char* filename;
+	int i, j,value;
+	IplImage* cvImg;
+	CvSize imgSize;
+	uchar** img,** result_img;
 
+	if (argc != 5)
+	{
+		printf("Exe imgData x_size y_size \n");
+		exit(0);
+	}
 
-   if (argc != 5)
-   {
-      printf("Exe imgData x_size y_size \n");
-      exit(0);
-   }
+	imgSize.width = atoi(argv[2]);
+	imgSize.height = atoi(argv[3]);
+	value = atoi(argv[4]);
+	img = uc_alloc(imgSize.width, imgSize.height);
+	result_img = uc_alloc(imgSize.width, imgSize.height);
+	read_ucmatrix(imgSize.width, imgSize.height, img, argv[1]);
 
-   imgSize.width = atoi(argv[2]);
-   imgSize.height = atoi(argv[3]);
-   flag = atoi(argv[4]);
+	cvImg = cvCreateImage(imgSize, 8, 1);
 
-   gaussMask = d_alloc(imgSize.width, imgSize.height);
-   aveMask = d_alloc(imgSize.width, imgSize.height);
+	median(img, result_img, imgSize.height, imgSize.width, value, 3);
 
-   gaussMask[0][0] = 1 / 16.;
-   gaussMask[0][1] = 2 / 16.;
-   gaussMask[0][2] = 1 / 16.;
-   gaussMask[1][0] = 1 / 16.;
-   gaussMask[1][1] = 2 / 16.;
-   gaussMask[1][2] = 4 / 16.;
-   gaussMask[2][0] = 2 / 16.;
-   gaussMask[2][1] = 2 / 16.;
-   gaussMask[2][2] = 1 / 16.;
+	for (i = 0; i < imgSize.height; i++)
+		for (j = 0; j < imgSize.width; j++)
+		{
 
-   aveMask[0][0] = 1 / 9.;
-   aveMask[0][1] = 1 / 9.;
-   aveMask[0][2] = 1 / 9.;
-   aveMask[1][0] = 1 / 9.;
-   aveMask[1][1] = 1 / 9.;
-   aveMask[1][2] = 1 / 9.;
-   aveMask[2][0] = 1 / 9.;
-   aveMask[2][1] = 1 / 9.;
-   aveMask[2][2] = 1 / 9.;
+			((uchar*)(cvImg->imageData + cvImg->widthStep * i))[j] = result_img[i][j];
 
+		}
+	cvNamedWindow(argv[1], 1);
+	cvShowImage(argv[1], cvImg);
 
-   inImg = uc_alloc(imgSize.width, imgSize.height);
-   outImg = uc_alloc(imgSize.width, imgSize.height);
+	cvWaitKey(0);
 
-   read_ucmatrix(imgSize.width, imgSize.height, inImg, argv[1]);
+	cvDestroyWindow("image");
+	cvReleaseImage(&cvImg);
 
-   cvImg = cvCreateImage(imgSize, 8, 1);
+	getchar();
 
-   if (flag == 0)
-      convolution(gaussMask, block_size, imgSize.width, imgSize.height, inImg, outImg);
-   else if (flag == 1)
-      convolution(aveMask, block_size, imgSize.width, imgSize.height, inImg, outImg);
-   else {
-      printf("flag must be 0 or 1 \n");
-      exit(1);
-   }
-
-   for (i = 0; i < imgSize.height; i++)
-      for (j = 0; j < imgSize.width; j++)
-      {
-
-         ((uchar*)(cvImg->imageData + cvImg->widthStep * i))[j] = inImg[i][j];
-
-      }
-   cvNamedWindow(argv[1], 1);
-   cvShowImage(argv[1], cvImg);
-
-   for (i = 0; i < imgSize.height; i++)
-      for (j = 0; j < imgSize.width; j++)
-      {
-
-         ((uchar*)(cvImg->imageData + cvImg->widthStep * i))[j] = outImg[i][j];
-
-      }
-   cvShowImage("filter image", cvImg);
-
-
-
-   cvWaitKey(0);
-
-   cvDestroyWindow("image");
-   cvReleaseImage(&cvImg);
-
-   getchar();
-
-   return 0;
+	return 0;
 
 }
