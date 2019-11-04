@@ -1,4 +1,4 @@
-4-3
+4-4
 
 #include <iostream>
 
@@ -13,9 +13,11 @@
 
 #define unsigned char uchar
 
-double** sobelYMask, ** sobelXMask, ** PrewittMask, ** RobertsMak, ** Laaplace1Mask, ** Laplace2Mask;
+double** sobelYMask, ** sobelXMask, ** PrewittMask, ** RobertsMak, ** Laaplace1Mask, ** Laplace2Mask, **embosMask;
 int mask_size = 3;
 int block_size = 3;
+int embos_size = 3;
+
 
 uchar** uc_alloc(int size_x, int size_y)
 {
@@ -207,7 +209,7 @@ void convolutionD2(double** h, int F_length, int size_x, int size_y, uchar** ima
 				}
 			}
 
-			//sum += 128;
+			sum += 100;
 			if (sum < 0)sum = 0.;
 			else if (sum > 255)sum = 255.;
 			image2[i][j] = (uchar)sum;
@@ -244,14 +246,8 @@ int main(int argc, char* argv[])
 	cvImg = cvCreateImage(imgSize, 8, 1);
 	
 
-	make_Mask(mask_size, Mask, 0); //세로
+	make_Mask(mask_size, Mask, 10); //엠보싱
 	convolutionD2(Mask, block_size, imgSize.width, imgSize.height, img, result_img);
-	/*ke_Mask(mask_size, Mask, 1); //가로
-	convolutionD2(Mask, block_size, imgSize.width, imgSize.height, inImg2, outImg2);
-
-	for (i = 0; i < imgSize.height; i++)
-		for (j = 0; j < imgSize.width; j++)
-			outImg3[i][j] = (outImg[i][j] + outImg2[i][j]) / 2;*/
 
 
 	for (i = 0; i < imgSize.height; i++)
