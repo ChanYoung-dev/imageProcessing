@@ -13,3 +13,6 @@
 11. Histogram Specification
 
 
+.. 더 많은 내용은 종합보고서 참고
+
+<img width="793" alt="스크린샷 2021-10-01 오전 11 40 54" src="https://user-images.githubusercontent.com/46098949/135557237-0d1d02c1-fd51-474e-8613-04907dbdc29a.png">
